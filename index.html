@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📈 Gold-Platin-Ratio</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#374151">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gold/Platin">
+
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script> 
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      color: #333;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    h1 {
+      text-align: center;
+      padding: 30px 20px;
+      background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+      color: white;
+      font-size: 2rem;
+      font-weight: 600;
+    }
+    .chart-wrapper {
+      padding: 30px;
+      position: relative;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #777;
+      font-size: 1.1rem;
+    }
+    .info-box {
+      background: #f8fafc;
+      border-left: 4px solid #374151;
+      padding: 20px;
+      margin: 20px 30px;
+      border-radius: 8px;
+    }
+    .info-box h3 {
+      color: #374151;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+    .info-box p {
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .current-ratio {
+      text-align: center;
+      padding: 20px;
+      background: #1e40af;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    #installBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1e40af;
+      border: none;
+      padding: 15px;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+      display: none;
+      font-size: 1.2rem;
+      transition: transform 0.2s;
+    }
+    #installBtn:hover {
+      transform: scale(1.1);
+    }
+    @media (max-width: 768px) {
+      h1 { font-size: 1.5rem; padding: 20px; }
+      .chart-wrapper { padding: 20px; }
+      .info-box { margin: 15px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📈 Gold-Platin-Ratio (letzte 100 Jahre)</h1>
+    
+    <div class="current-ratio" id="currentRatio">
+      Aktuelles Verhältnis wird geladen...
+    </div>
+
+    <div class="chart-wrapper">
+      <canvas id="ratioChart"></canvas>
+    </div>
+    
+    <div class="loading" id="loading">Historische Daten werden geladen...</div>
+    
+    <div class="info-box">
+      <h3>📊 Interpretation der Gold-Platin-Ratio</h3>
+      <p><strong>Ratio < 1.0:</strong> Platin ist teurer als Gold (historisch normal bis 2008)</p>
+      <p><strong>Ratio 1.0-1.5:</strong> Gold und Platin etwa gleich wertig (Übergangsbereich)</p>
+      <p><strong>Ratio > 1.5:</strong> Gold deutlich teurer als Platin (seit Finanzkrise häufiger)</p>
+      <p><strong>Ratio > 2.0:</strong> Extreme Divergenz, oft Kaufgelegenheit für Platin</p>
+    </div>
+  </div>
+
+  <button id="installBtn">📱</button>
+
+  <script>
+    const ctx = document.getElementById('ratioChart').getContext('2d');
+    let ratioChart;
+
+    async function fetchData() {
+      try {
+        // Simulierte historische Daten für Gold-Platin-Ratio (1925-2025)
+        const startDate = new Date(1925, 0, 1);
+        const endDate = new Date(2025, 4, 30);
+        const labels = [];
+        const ratios = [
+          // 1925–1970: Platin meist teurer als Gold (Ratio 0.5-0.9)
+          ...Array(540).fill(0).map((_, i) => 0.5 + (i % 60) * 0.007 + (Math.sin(i / 24) * 0.1)),
+          
+          // 1970–1980: Annäherung, Ratio steigt auf 0.8-1.2
+          ...Array(120).fill(0).map((_, i) => 0.7 + (i / 120) * 0.5 + (Math.sin(i / 12) * 0.15)),
+          
+          // 1980–2000: Schwankung um 1.0, beide Metalle etwa gleich
+          ...Array(240).fill(0).map((_, i) => 0.8 + (Math.sin(i / 12) * 0.3) + (Math.sin(i / 48) * 0.2)),
+          
+          // 2000–2008: Platin-Boom, Ratio fällt auf 0.4-0.7
+          ...Array(96).fill(0).map((_, i) => 1.0 - (i / 96) * 0.6 + (Math.sin(i / 12) * 0.1)),
+          
+          // 2008–2012: Finanzkrise, Ratio steigt dramatisch auf 1.5-1.8
+          ...Array(48).fill(0).map((_, i) => 0.4 + (i / 48) * 1.4 + (Math.sin(i / 6) * 0.2)),
+          
+          // 2012–2020: Volatilität, Ratio 1.0-2.0
+          ...Array(96).fill(0).map((_, i) => 1.2 + (Math.sin(i / 12) * 0.8) + (Math.sin(i / 36) * 0.3)),
+          
+          // 2020–2025: COVID-Effekt, extreme Volatilität 0.8-2.5
+          ...Array(65).fill(0).map((_, i) => {
+            if (i < 12) return 1.5 + (i / 12) * 1.0; // 2020: Anstieg auf 2.5
+            if (i < 24) return 2.5 - (i - 12) / 12 * 0.8; // 2021: Rückgang auf 1.7
+            return 1.7 + (Math.sin((i - 24) / 6) * 0.4); // 2022-2025: Schwankung
+          })
+        ];
+
+        // Labels für jeden Monat generieren
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+          labels.push(currentDate.toISOString().split('T')[0]);
+          currentDate.setMonth(currentDate.getMonth() + 1);
+        }
+
+        // Sicherstellen, dass die Anzahl der Labels und Ratios übereinstimmt
+        if (labels.length > ratios.length) {
+          labels.splice(ratios.length);
+        } else if (ratios.length > labels.length) {
+          ratios.splice(labels.length);
+        }
+
+        // Aktueller Ratio-Wert
+        const currentRatio = ratios[ratios.length - 1];
+        document.getElementById('currentRatio').textContent = 
+          `Aktuelle Gold/Platin-Ratio: ${currentRatio.toFixed(2)}`;
+
+        document.getElementById('loading').style.display = 'none';
+
+        if (ratioChart) ratioChart.destroy();
+
+        ratioChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Gold/Platin Ratio (Simuliert)',
+              data: ratios,
+              borderColor: '#1e40af',
+              backgroundColor: 'rgba(30, 64, 175, 0.1)',
+              tension: 0.3,
+              pointRadius: 1,
+              pointHoverRadius: 5,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { 
+                display: true,
+                labels: {
+                  color: '#374151',
+                  font: { size: 14 }
+                }
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false,
+                backgroundColor: 'rgba(30, 64, 175, 0.9)',
+                titleColor: 'white',
+                bodyColor: 'white',
+                borderColor: '#1e40af',
+                borderWidth: 1,
+                callbacks: {
+                  label: function(context) {
+                    const ratio = context.parsed.y;
+                    let interpretation = '';
+                    if (ratio < 1.0) interpretation = ' (Platin teurer)';
+                    else if (ratio > 2.0) interpretation = ' (Gold sehr dominant)';
+                    else if (ratio > 1.5) interpretation = ' (Gold teurer)';
+                    else interpretation = ' (etwa gleich)';
+                    
+                    return `Ratio: ${ratio.toFixed(2)}${interpretation}`;
+                  }
+                }
+              }
+            },
+            interaction: {
+              mode: 'nearest',
+              axis: 'x',
+              intersect: false
+            },
+            scales: {
+              x: {
+                grid: {
+                  color: '#f3f4f6'
+                },
+                ticks: {
+                  color: '#6b7280',
+                  maxTicksLimit: 10
+                }
+              },
+              y: {
+                beginAtZero: false,
+                grid: {
+                  color: (context) => {
+                    if (Math.abs(context.tick.value - 1.0) < 0.01) {
+                      return '#22c55e'; // Grüne Linie bei 1.0 (Parität)
+                    }
+                    if (Math.abs(context.tick.value - 2.0) < 0.01) {
+                      return '#ef4444'; // Rote Linie bei 2.0 (Extreme)
+                    }
+                    return '#f3f4f6';
+                  },
+                  lineWidth: (context) => {
+                    if (Math.abs(context.tick.value - 1.0) < 0.01 || 
+                        Math.abs(context.tick.value - 2.0) < 0.01) {
+                      return 2;
+                    }
+                    return 1;
+                  }
+                },
+                ticks: {
+                  color: '#6b7280',
+                  callback: function(value) {
+                    return value.toFixed(1);
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        // Chart-Container Höhe setzen
+        document.querySelector('.chart-wrapper').style.height = '500px';
+
+      } catch (e) {
+        document.getElementById('loading').textContent = `Fehler: ${e.message || 'Keine Daten verfügbar.'}`;
+        console.error(e);
+      }
+    }
+
+    // PWA Setup
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the A2HS prompt');
+        }
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      }
+    });
+
+    // Service Worker Registrierung (deaktiviert für sandboxed Umgebung)
+    // if ('serviceWorker' in navigator) {
+    //   navigator.serviceWorker.register('/sw.js')
+    //     .then(() => console.log('Service Worker registriert'))
+    //     .catch(err => console.log('SW nicht registriert:', err));
+    // }
+
+    fetchData();
+  </script>
+</body>
+</html>
