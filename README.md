@@ -1,0 +1,1 @@
+# Gold-Platin-Ratio
