@@ -1,0 +1,21 @@
+{
+  "name": "Gold-Silber-Ratio",
+  "short_name": "Gold/Silber",
+  "description": "Eine App zur Anzeige der Gold-Silber-Ratio der letzten 10 Jahre.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#fffbe6",
+  "theme_color": "#facc15",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192.png?text=Icon",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512.png?text=Icon",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
