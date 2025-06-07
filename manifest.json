@@ -1,19 +1,19 @@
 {
-  "name": "Gold-Silber-Ratio",
-  "short_name": "Gold/Silber",
-  "description": "Eine App zur Anzeige der Gold-Silber-Ratio der letzten 10 Jahre.",
-  "start_url": "/index.html",
+  "name": "Gold/Silver Ratio Tracker",
+  "short_name": "GS Ratio",
+  "description": "Track the latest gold-to-silver ratio with offline support",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#fffbe6",
-  "theme_color": "#facc15",
+  "background_color": "#f5f5f5",
+  "theme_color": "#d4af37",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192.png?text=Icon",
+      "src": "icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://via.placeholder.com/512x512.png?text=Icon",
+      "src": "icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
