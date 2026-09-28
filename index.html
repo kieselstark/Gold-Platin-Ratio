@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>📈 Gold-Platin-Ratio</title>
+  <title>📈 Gold-Platin- &amp; Gold-Silber-Ratio</title>
 
   <!-- PWA Meta Tags -->
   <meta name="theme-color" content="#374151">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Gold/Platin">
+  <meta name="apple-mobile-web-app-title" content="Gold-Ratios">
 
-  <!-- Manifest -->
-  <link rel="manifest" href="/manifest.json">
+  <!-- Manifest (relativ, damit es unter /Gold-Platin-Ratio/ auf GitHub Pages gefunden wird) -->
+  <link rel="manifest" href="manifest.json">
 
   <!-- Chart.js CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,27 +42,48 @@
       font-size: 2rem;
       font-weight: 600;
     }
-    .chart-wrapper {
-      padding: 30px;
-      position: relative;
+    h2 {
+      font-size: 1.25rem;
+      color: #374151;
+      padding: 28px 30px 0;
     }
-    canvas {
-      max-width: 100%;
-      height: auto;
+    .tiles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: #1e3a8a;
     }
-    .loading {
+    .tile {
       text-align: center;
-      padding: 40px;
-      color: #777;
-      font-size: 1.1rem;
+      padding: 18px 12px;
+      background: #1e40af;
+      color: white;
+    }
+    .tile.silver { background: #475569; }
+    .tile .label { font-size: .9rem; opacity: .85; }
+    .tile .value { font-size: 1.9rem; font-weight: 700; margin: 4px 0; font-variant-numeric: tabular-nums; }
+    .tile .sub { font-size: .8rem; opacity: .8; }
+    .stand {
+      text-align: center;
+      font-size: .8rem;
+      color: #64748b;
+      padding: 8px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .chart-wrapper {
+      padding: 20px 30px 10px;
+      position: relative;
+      height: 460px;
     }
     .info-box {
       background: #f8fafc;
       border-left: 4px solid #374151;
       padding: 20px;
-      margin: 20px 30px;
+      margin: 10px 30px 20px;
       border-radius: 8px;
     }
+    .info-box.silver { border-left-color: #64748b; }
     .info-box h3 {
       color: #374151;
       margin-bottom: 10px;
@@ -73,14 +94,13 @@
       line-height: 1.6;
       margin-bottom: 8px;
     }
-    .current-ratio {
-      text-align: center;
-      padding: 20px;
-      background: #1e40af;
-      color: white;
-      font-size: 1.5rem;
-      font-weight: 600;
+    .sources {
+      font-size: .8rem;
+      color: #94a3b8;
+      padding: 10px 30px 30px;
+      line-height: 1.6;
     }
+    .sources a { color: #64748b; }
     #installBtn {
       position: fixed;
       bottom: 20px;
@@ -95,203 +115,192 @@
       font-size: 1.2rem;
       transition: transform 0.2s;
     }
-    #installBtn:hover {
-      transform: scale(1.1);
-    }
+    #installBtn:hover { transform: scale(1.1); }
     @media (max-width: 768px) {
-      h1 { font-size: 1.5rem; padding: 20px; }
-      .chart-wrapper { padding: 20px; }
-      .info-box { margin: 15px 20px; }
+      body { padding: 10px; }
+      h1 { font-size: 1.4rem; padding: 20px; }
+      h2 { padding: 20px 16px 0; }
+      .chart-wrapper { padding: 12px 8px 4px; height: 340px; }
+      .info-box { margin: 10px 16px 16px; }
+      .sources { padding: 10px 16px 24px; }
+      .tile .value { font-size: 1.5rem; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📈 Gold-Platin-Ratio (letzte 100 Jahre)</h1>
-    
-    <div class="current-ratio" id="currentRatio">
-      Aktuelles Verhältnis wird geladen...
-    </div>
+    <h1>📈 Gold-Ratios (letzte 100 Jahre)</h1>
 
-    <div class="chart-wrapper">
-      <canvas id="ratioChart"></canvas>
+    <div class="tiles">
+      <div class="tile">
+        <div class="label">Gold / Platin</div>
+        <div class="value" id="curGP">–</div>
+        <div class="sub" id="curGPsub">wird geladen…</div>
+      </div>
+      <div class="tile silver">
+        <div class="label">Gold / Silber</div>
+        <div class="value" id="curGS">–</div>
+        <div class="sub" id="curGSsub">wird geladen…</div>
+      </div>
     </div>
-    
-    <div class="loading" id="loading">Historische Daten werden geladen...</div>
-    
+    <div class="stand" id="stand">Preise werden geladen…</div>
+
+    <h2>Gold / Platin</h2>
+    <div class="chart-wrapper"><canvas id="gpChart"></canvas></div>
     <div class="info-box">
       <h3>📊 Interpretation der Gold-Platin-Ratio</h3>
-      <p><strong>Ratio < 1.0:</strong> Platin ist teurer als Gold (historisch normal bis 2008)</p>
-      <p><strong>Ratio 1.0-1.5:</strong> Gold und Platin etwa gleich wertig (Übergangsbereich)</p>
-      <p><strong>Ratio > 1.5:</strong> Gold deutlich teurer als Platin (seit Finanzkrise häufiger)</p>
-      <p><strong>Ratio > 2.0:</strong> Extreme Divergenz, oft Kaufgelegenheit für Platin</p>
+      <p><strong>Ratio &lt; 1.0:</strong> Platin ist teurer als Gold – über fast das ganze 20. Jahrhundert der Normalzustand (1920er: Platin 5–6× so teuer).</p>
+      <p><strong>Ratio ≈ 1.0:</strong> Parität – kurzzeitig in den 1930er/40ern, 1981–85 und Mitte der 1990er. Seit Sept. 2011 dauerhaft überschritten.</p>
+      <p><strong>Ratio &gt; 2.0:</strong> Gold mehr als doppelt so teuer – historisch einmalig, erstmals 2020, Hoch ≈ 3.4 im April 2025.</p>
+    </div>
+
+    <h2>Gold / Silber</h2>
+    <div class="chart-wrapper"><canvas id="gsChart"></canvas></div>
+    <div class="info-box silver">
+      <h3>📊 Interpretation der Gold-Silber-Ratio</h3>
+      <p><strong>Ratio &lt; 40:</strong> Silber relativ teuer – z.B. Mitte der 1950er bis 1980 und im April 2011 (≈ 32).</p>
+      <p><strong>Ratio 50–80:</strong> Typischer Bereich der letzten Jahrzehnte.</p>
+      <p><strong>Ratio &gt; 80:</strong> Silber relativ günstig – Extremwerte 1940 (≈ 97) und April 2020 (≈ 113).</p>
+    </div>
+
+    <div class="sources">
+      <strong>Datenquellen:</strong> 1925–1999 Jahresdurchschnitte aus
+      <a href="https://pubs.usgs.gov/sir/2012/5188/">USGS „Metal Prices in the United States Through 2010“</a>
+      (Gold vor 1968: <a href="https://www.usgs.gov/media/files/gold-historical-statistics-data-series-140">USGS DS140</a>, bis 1933 amtlicher Preis $20.67).
+      Ab Aug. 2000 Monatsschlusskurse der COMEX/NYMEX-Futures (GC, SI, PL). Aktueller Wert: Spotpreise von
+      <a href="https://gold-api.com">gold-api.com</a>. Stand der historischen Daten: August 2026.
     </div>
   </div>
 
   <button id="installBtn">📱</button>
 
   <script>
-    const ctx = document.getElementById('ratioChart').getContext('2d');
-    let ratioChart;
+    // [Jahr/Monat, Gold $/oz, Silber $/oz, Platin $/oz]
+    const ANNUAL = [[1925,20.67,0.69,119.0],[1926,20.67,0.62,113.0],[1927,20.67,0.57,85.0],[1928,20.67,0.58,79.0],[1929,20.67,0.53,68.0],[1930,20.67,0.38,44.0],[1931,20.67,0.29,32.0],[1932,20.67,0.28,32.0],[1933,26.34,0.35,31.0],[1934,34.84,0.48,34.0],[1935,34.84,0.64,33.0],[1936,34.84,0.45,42.0],[1937,34.84,0.45,47.0],[1938,34.84,0.43,34.0],[1939,34.52,0.39,36.0],[1940,33.9,0.35,36.0],[1941,33.9,0.35,36.0],[1942,33.9,0.38,36.0],[1943,33.9,0.45,35.0],[1944,33.9,0.45,35.0],[1945,34.84,0.52,35.0],[1946,34.84,0.8,53.0],[1947,34.84,0.72,62.0],[1948,34.84,0.74,92.0],[1949,31.73,0.72,75.0],[1950,34.84,0.74,76.0],[1951,34.84,0.89,93.0],[1952,34.52,0.85,93.0],[1953,34.84,0.85,93.0],[1954,35.15,0.85,88.0],[1955,35.15,0.89,94.0],[1956,35.15,0.91,105.0],[1957,34.84,0.91,90.0],[1958,35.15,0.89,66.0],[1959,35.15,0.91,72.0],[1960,35.15,0.91,83.0],[1961,35.15,0.92,83.0],[1962,35.15,1.09,83.0],[1963,35.15,1.28,82.0],[1964,35.15,1.29,90.0],[1965,35.15,1.29,100.0],[1966,35.15,1.29,100.0],[1967,35.15,1.55,111.0],[1968,40.06,2.14,117.0],[1969,41.51,1.79,124.0],[1970,36.41,1.77,133.0],[1971,41.25,1.55,121.0],[1972,58.6,1.68,121.0],[1973,97.81,2.56,150.0],[1974,159.74,4.71,181.0],[1975,161.49,4.42,164.0],[1976,125.32,4.35,162.0],[1977,148.31,4.62,157.0],[1978,193.55,5.4,261.0],[1979,307.5,11.09,445.0],[1980,612.56,20.63,677.0],[1981,459.64,10.52,446.0],[1982,375.91,7.95,327.0],[1983,424.0,11.44,424.0],[1984,360.66,8.14,357.0],[1985,317.66,6.14,291.0],[1986,368.24,5.47,461.0],[1987,477.95,7.01,553.0],[1988,438.31,6.53,523.0],[1989,382.58,5.5,507.0],[1990,384.93,4.82,467.0],[1991,363.29,4.04,371.0],[1992,344.97,3.94,361.0],[1993,360.91,4.3,375.0],[1994,385.41,5.29,411.0],[1995,385.5,5.15,425.0],[1996,389.08,5.19,398.0],[1997,332.38,4.89,397.0],[1998,295.24,5.54,373.0],[1999,279.91,5.25,379.0]];
+const MONTHLY = [["2000-08",278.3,5.003,586.7],["2000-09",273.6,4.899,578.8],["2000-11",270.1,4.674,605.9],["2000-12",272.0,4.585,609.6],["2001-01",265.6,4.791,601.1],["2001-02",266.8,4.472,610.0],["2001-03",257.9,4.278,555.0],["2001-05",265.3,4.396,603.1],["2001-06",270.6,4.292,560.1],["2001-08",274.4,4.162,443.0],["2001-09",292.4,4.647,433.3],["2001-10",279.5,4.214,412.5],["2001-11",273.9,4.128,449.3],["2001-12",278.7,4.579,493.0],["2002-01",282.1,4.216,465.2],["2002-03",302.6,4.641,515.7],["2002-04",308.9,4.532,532.5],["2002-05",326.5,5.026,545.9],["2002-06",313.5,4.833,537.3],["2002-07",303.2,4.595,524.6],["2002-08",312.4,4.437,565.8],["2002-10",318.0,4.499,571.8],["2002-11",316.8,4.414,581.9],["2003-01",368.3,4.853,658.9],["2003-02",350.2,4.585,672.5],["2003-03",335.9,4.461,648.4],["2003-04",339.1,4.638,599.3],["2003-05",364.5,4.526,636.8],["2003-07",354.0,5.116,685.7],["2003-08",375.7,5.109,708.6],["2003-09",385.4,5.137,706.9],["2003-10",384.5,5.059,754.9],["2003-12",415.7,5.953,811.3],["2004-01",402.2,6.246,830.3],["2004-03",427.3,7.936,908.7],["2004-04",387.0,6.078,863.5],["2004-07",391.0,6.55,817.9],["2004-09",418.7,6.916,861.0],["2004-10",428.5,7.292,833.0],["2004-11",451.3,7.723,872.3],["2004-12",437.5,6.807,863.7],["2005-01",421.8,6.737,873.8],["2005-02",436.5,7.359,866.0],["2005-03",428.7,7.191,870.6],["2005-04",435.0,6.902,868.6],["2005-06",435.9,7.028,883.5],["2005-07",429.9,7.238,897.9],["2005-08",433.8,6.781,894.5],["2005-09",469.0,7.458,930.3],["2005-10",465.1,7.55,942.4],["2005-11",494.6,8.28,952.5],["2005-12",517.1,8.82,973.0],["2006-03",581.8,11.48,1059.4],["2006-04",651.8,13.51,1163.3],["2006-05",642.5,12.398,1246.8],["2006-06",613.5,10.91,1246.7],["2006-07",634.2,11.325,1242.0],["2006-09",598.6,11.45,1141.2],["2006-11",646.9,13.925,1150.6],["2006-12",635.2,12.818,1139.3],["2007-01",652.0,13.514,1180.7],["2007-02",669.4,14.1,1193.0],["2007-03",663.0,13.39,1248.3],["2007-06",648.1,12.353,1279.0],["2007-08",673.0,12.063,1271.6],["2007-09",742.8,13.794,1395.2],["2007-10",792.0,14.377,1468.0],["2007-12",834.9,14.797,1528.4],["2008-01",922.7,16.948,1736.9],["2008-02",972.1,19.808,2155.7],["2008-03",916.2,17.275,2024.4],["2008-04",862.8,16.502,1970.6],["2008-07",913.9,17.75,1750.3],["2008-09",874.2,12.231,1015.1],["2008-10",716.8,9.73,811.1],["2008-12",883.6,11.27,936.2],["2009-01",927.3,12.56,960.0],["2009-04",890.7,12.305,1096.1],["2009-06",927.1,13.574,1176.7],["2009-07",953.7,13.933,1167.6],["2009-09",1008.0,16.636,1295.6],["2009-10",1039.7,16.246,1297.4],["2009-12",1095.2,16.822,1460.0],["2010-01",1083.0,16.183,1501.3],["2010-02",1118.3,16.5,1538.0],["2010-03",1113.3,17.512,1639.8],["2010-04",1180.1,18.611,1745.1],["2010-05",1212.2,18.411,1547.4],["2010-06",1245.5,18.671,1530.9],["2010-07",1181.7,17.987,1576.8],["2010-09",1307.8,21.798,1652.0],["2010-10",1357.1,24.56,1705.1],["2010-11",1385.0,28.185,1650.4],["2010-12",1421.1,30.91,1773.3],["2011-01",1333.8,28.174,1797.5],["2011-02",1409.3,33.804,1809.2],["2011-03",1438.9,37.872,1779.3],["2011-04",1556.0,48.584,1871.5],["2011-06",1502.3,34.812,1724.8],["2011-07",1628.3,40.092,1785.3],["2011-08",1828.5,41.699,1856.2],["2011-09",1620.4,30.041,1519.4],["2011-10",1724.2,34.337,1597.6],["2011-11",1745.5,32.731,1559.8],["2011-12",1565.8,27.875,1399.7],["2012-02",1709.9,34.583,1691.1],["2012-03",1669.3,32.469,1638.3],["2012-05",1562.6,27.741,1416.1],["2012-06",1603.5,27.58,1449.1],["2012-08",1684.6,31.37,1536.3],["2012-09",1771.1,34.517,1665.3],["2012-10",1717.5,32.288,1576.0],["2012-11",1710.9,33.204,1603.1],["2012-12",1674.8,30.173,1538.7],["2013-01",1660.6,31.335,1673.9],["2013-02",1577.7,28.395,1582.4],["2013-03",1594.8,28.292,1571.2],["2013-04",1472.2,24.144,1505.4],["2013-05",1392.6,22.228,1460.6],["2013-06",1223.8,19.451,1336.9],["2013-07",1312.4,19.617,1428.4],["2013-08",1396.1,23.463,1526.2],["2013-10",1323.6,21.832,1445.9],["2013-11",1250.6,19.981,1367.9],["2014-01",1240.1,19.105,1374.1],["2014-02",1321.4,21.204,1446.2],["2014-03",1283.4,19.734,1418.5],["2014-04",1295.6,19.119,1426.6],["2014-05",1245.6,18.653,1454.7],["2014-07",1281.3,20.373,1465.7],["2014-08",1285.8,19.398,1426.7],["2014-09",1210.5,17.006,1298.5],["2014-10",1171.1,16.077,1236.2],["2014-11",1175.2,15.489,1210.4],["2014-12",1183.9,15.565,1208.9],["2015-01",1278.5,17.192,1239.2],["2015-04",1182.4,16.124,1139.9],["2015-05",1189.4,16.684,1111.0],["2015-06",1171.5,15.551,1078.6],["2015-07",1094.9,14.746,984.0],["2015-08",1131.6,14.577,1010.1],["2015-09",1115.5,14.513,907.2],["2015-10",1141.5,15.566,988.6],["2015-12",1060.3,13.775,891.7],["2016-01",1116.4,14.229,872.3],["2016-02",1233.9,14.896,933.7],["2016-03",1234.2,15.46,976.6],["2016-04",1289.2,17.789,1077.9],["2016-06",1318.4,18.582,1021.5],["2016-07",1349.0,20.312,1147.3],["2016-08",1306.9,18.622,1050.8],["2016-09",1313.3,19.139,1028.6],["2016-10",1271.5,17.762,975.8],["2016-11",1170.8,16.406,908.1],["2016-12",1150.0,15.936,901.6],["2017-02",1252.6,18.42,1029.5],["2017-03",1247.3,18.235,948.2],["2017-04",1266.1,17.191,946.3],["2017-05",1272.0,17.368,948.5],["2017-06",1240.7,16.568,923.7],["2017-07",1266.6,16.75,937.7],["2017-08",1316.2,17.48,996.8],["2017-09",1281.5,16.607,910.3],["2017-11",1273.2,16.382,941.3],["2017-12",1306.3,17.06,934.2],["2018-01",1339.0,17.204,1001.3],["2018-02",1315.5,16.324,986.6],["2018-03",1322.8,16.223,927.3],["2018-05",1300.1,16.402,908.1],["2018-06",1251.3,16.104,852.4],["2018-08",1200.3,14.438,785.9],["2018-09",1191.5,14.623,818.7],["2018-10",1212.3,14.229,839.4],["2018-11",1220.2,14.094,798.0],["2018-12",1278.3,15.433,795.9],["2019-01",1319.7,16.022,820.5],["2019-02",1312.8,15.538,873.0],["2019-03",1293.0,15.06,848.9],["2019-04",1282.8,14.9,888.1],["2019-05",1305.8,14.53,792.6],["2019-06",1409.7,15.253,835.5],["2019-07",1426.1,16.346,876.1],["2019-08",1519.1,18.185,929.6],["2019-10",1511.4,18.014,930.0],["2019-11",1465.6,16.969,897.9],["2020-01",1582.9,17.972,959.2],["2020-02",1564.1,16.387,862.8],["2020-04",1684.2,14.898,809.5],["2020-05",1751.7,18.44,870.5],["2020-06",1800.5,18.541,840.7],["2020-07",1962.8,24.189,912.2],["2020-08",1978.6,28.437,935.7],["2020-09",1895.5,23.433,901.0],["2020-10",1879.9,23.617,844.6],["2020-12",1895.1,26.332,1075.4],["2021-01",1847.3,26.9,1075.8],["2021-02",1728.8,26.402,1183.5],["2021-03",1713.8,24.517,1188.5],["2021-04",1767.7,25.853,1203.0],["2021-05",1902.5,27.993,1180.8],["2021-06",1771.6,26.165,1070.5],["2021-07",1812.6,25.528,1046.9],["2021-09",1757.0,22.021,960.9],["2021-10",1783.9,23.945,1019.6],["2021-11",1773.6,22.765,926.6],["2021-12",1828.6,23.328,964.4],["2022-01",1795.0,22.395,1019.2],["2022-02",1900.7,24.361,1037.8],["2022-03",1949.2,25.121,992.5],["2022-04",1911.7,23.04,937.6],["2022-06",1807.3,20.282,898.4],["2022-07",1762.9,20.156,884.9],["2022-08",1726.2,17.762,826.4],["2022-09",1672.0,18.96,870.0],["2022-10",1640.7,19.125,939.4],["2022-11",1746.0,21.55,1052.3],["2022-12",1826.2,23.862,1073.7],["2023-02",1836.7,20.961,955.2],["2023-03",1969.0,24.076,994.1],["2023-04",1999.1,24.999,1088.2],["2023-05",1963.9,23.474,1007.1],["2023-06",1929.4,22.81,904.5],["2023-07",1970.5,24.854,949.7],["2023-08",1965.9,24.472,971.3],["2023-09",1866.1,22.236,906.8],["2023-11",2038.1,25.293,931.2],["2023-12",2071.8,23.853,995.0],["2024-01",2048.4,23.051,924.4],["2024-02",2054.7,22.666,879.9],["2024-03",2217.4,24.797,907.7],["2024-04",2302.9,26.391,941.2],["2024-05",2322.9,30.297,1037.7],["2024-06",2339.6,29.237,1001.9],["2024-07",2426.5,28.778,982.2],["2024-08",2527.6,28.731,927.8],["2024-10",2749.3,32.653,991.6],["2024-11",2657.0,30.685,949.5],["2025-01",2812.5,32.128,1033.2],["2025-02",2848.5,31.219,932.3],["2025-03",3122.8,34.457,1009.7],["2025-04",3319.1,32.531,963.8],["2025-05",3288.9,32.892,1051.7],["2025-07",3293.2,36.552,1286.4],["2025-08",3516.1,40.2,1365.7],["2025-09",3873.2,46.253,1584.6],["2025-10",3996.5,47.994,1569.8],["2025-11",4254.9,56.446,1677.7],["2025-12",4341.1,70.134,2034.5],["2026-01",4745.1,78.29,2102.8],["2026-04",4629.6,73.534,1979.0],["2026-05",4593.0,75.616,1922.2],["2026-06",4038.5,59.477,1550.2],["2026-07",4107.0,57.591,1650.3],["2026-08",4481.5,66.221,1788.4]];
 
-    async function fetchData() {
-      try {
-        // Simulierte historische Daten für Gold-Platin-Ratio (1925-2025)
-        const startDate = new Date(1925, 0, 1);
-        const endDate = new Date(2025, 4, 30);
-        const labels = [];
-        const ratios = [
-          // 1925–1970: Platin meist teurer als Gold (Ratio 0.5-0.9)
-          ...Array(540).fill(0).map((_, i) => 0.5 + (i % 60) * 0.007 + (Math.sin(i / 24) * 0.1)),
-          
-          // 1970–1980: Annäherung, Ratio steigt auf 0.8-1.2
-          ...Array(120).fill(0).map((_, i) => 0.7 + (i / 120) * 0.5 + (Math.sin(i / 12) * 0.15)),
-          
-          // 1980–2000: Schwankung um 1.0, beide Metalle etwa gleich
-          ...Array(240).fill(0).map((_, i) => 0.8 + (Math.sin(i / 12) * 0.3) + (Math.sin(i / 48) * 0.2)),
-          
-          // 2000–2008: Platin-Boom, Ratio fällt auf 0.4-0.7
-          ...Array(96).fill(0).map((_, i) => 1.0 - (i / 96) * 0.6 + (Math.sin(i / 12) * 0.1)),
-          
-          // 2008–2012: Finanzkrise, Ratio steigt dramatisch auf 1.5-1.8
-          ...Array(48).fill(0).map((_, i) => 0.4 + (i / 48) * 1.4 + (Math.sin(i / 6) * 0.2)),
-          
-          // 2012–2020: Volatilität, Ratio 1.0-2.0
-          ...Array(96).fill(0).map((_, i) => 1.2 + (Math.sin(i / 12) * 0.8) + (Math.sin(i / 36) * 0.3)),
-          
-          // 2020–2025: COVID-Effekt, extreme Volatilität 0.8-2.5
-          ...Array(65).fill(0).map((_, i) => {
-            if (i < 12) return 1.5 + (i / 12) * 1.0; // 2020: Anstieg auf 2.5
-            if (i < 24) return 2.5 - (i - 12) / 12 * 0.8; // 2021: Rückgang auf 1.7
-            return 1.7 + (Math.sin((i - 24) / 6) * 0.4); // 2022-2025: Schwankung
-          })
-        ];
+    const LAST_HIST = 'August 2026';
+    const MONATE = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
 
-        // Labels für jeden Monat generieren
-        let currentDate = new Date(startDate);
-        while (currentDate <= endDate) {
-          labels.push(currentDate.toISOString().split('T')[0]);
-          currentDate.setMonth(currentDate.getMonth() + 1);
-        }
+    // Einheitliche Punkte mit Dezimaljahr als x-Wert
+    const points = [
+      ...ANNUAL.map(([y, g, s, p]) => ({ x: y + 0.5, label: String(y) + ' (Ø)', g, s, p })),
+      ...MONTHLY.map(([ym, g, s, p]) => {
+        const [y, m] = ym.split('-').map(Number);
+        return { x: y + (m - 0.5) / 12, label: MONATE[m - 1] + ' ' + y, g, s, p };
+      })
+    ];
 
-        // Sicherstellen, dass die Anzahl der Labels und Ratios übereinstimmt
-        if (labels.length > ratios.length) {
-          labels.splice(ratios.length);
-        } else if (ratios.length > labels.length) {
-          ratios.splice(labels.length);
-        }
+    const fmt = (v, d = 2) => v.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const usd = v => '$' + fmt(v, v < 100 ? 2 : 0);
 
-        // Aktueller Ratio-Wert
-        const currentRatio = ratios[ratios.length - 1];
-        document.getElementById('currentRatio').textContent = 
-          `Aktuelle Gold/Platin-Ratio: ${currentRatio.toFixed(2)}`;
-
-        document.getElementById('loading').style.display = 'none';
-
-        if (ratioChart) ratioChart.destroy();
-
-        ratioChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Gold/Platin Ratio (Simuliert)',
-              data: ratios,
-              borderColor: '#1e40af',
-              backgroundColor: 'rgba(30, 64, 175, 0.1)',
-              tension: 0.3,
-              pointRadius: 1,
-              pointHoverRadius: 5,
-              borderWidth: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { 
-                display: true,
-                labels: {
-                  color: '#374151',
-                  font: { size: 14 }
-                }
-              },
-              tooltip: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: 'rgba(30, 64, 175, 0.9)',
-                titleColor: 'white',
-                bodyColor: 'white',
-                borderColor: '#1e40af',
-                borderWidth: 1,
-                callbacks: {
-                  label: function(context) {
-                    const ratio = context.parsed.y;
-                    let interpretation = '';
-                    if (ratio < 1.0) interpretation = ' (Platin teurer)';
-                    else if (ratio > 2.0) interpretation = ' (Gold sehr dominant)';
-                    else if (ratio > 1.5) interpretation = ' (Gold teurer)';
-                    else interpretation = ' (etwa gleich)';
-                    
-                    return `Ratio: ${ratio.toFixed(2)}${interpretation}`;
-                  }
-                }
-              }
-            },
-            interaction: {
-              mode: 'nearest',
-              axis: 'x',
-              intersect: false
-            },
-            scales: {
-              x: {
-                grid: {
-                  color: '#f3f4f6'
-                },
-                ticks: {
-                  color: '#6b7280',
-                  maxTicksLimit: 10
-                }
-              },
-              y: {
-                beginAtZero: false,
-                grid: {
-                  color: (context) => {
-                    if (Math.abs(context.tick.value - 1.0) < 0.01) {
-                      return '#22c55e'; // Grüne Linie bei 1.0 (Parität)
-                    }
-                    if (Math.abs(context.tick.value - 2.0) < 0.01) {
-                      return '#ef4444'; // Rote Linie bei 2.0 (Extreme)
-                    }
-                    return '#f3f4f6';
-                  },
-                  lineWidth: (context) => {
-                    if (Math.abs(context.tick.value - 1.0) < 0.01 || 
-                        Math.abs(context.tick.value - 2.0) < 0.01) {
-                      return 2;
-                    }
-                    return 1;
-                  }
-                },
-                ticks: {
-                  color: '#6b7280',
-                  callback: function(value) {
-                    return value.toFixed(1);
-                  }
+    function makeChart(id, key, color, fill, opts) {
+      const data = points.map(pt => ({ x: pt.x, y: key === 'gp' ? pt.g / pt.p : pt.g / pt.s, pt }));
+      return new Chart(document.getElementById(id), {
+        type: 'line',
+        data: {
+          datasets: [{
+            label: opts.label,
+            data,
+            borderColor: color,
+            backgroundColor: fill,
+            fill: true,
+            tension: 0.2,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          parsing: false,
+          interaction: { mode: 'nearest', axis: 'x', intersect: false },
+          plugins: {
+            legend: { display: true, labels: { color: '#374151', font: { size: 14 } } },
+            tooltip: {
+              backgroundColor: 'rgba(17, 24, 39, 0.92)',
+              callbacks: {
+                title: items => items[0].raw.pt.label,
+                label: item => `Ratio: ${fmt(item.raw.y, key === 'gp' ? 2 : 1)}${opts.interpret(item.raw.y)}`,
+                afterLabel: item => {
+                  const pt = item.raw.pt;
+                  return key === 'gp'
+                    ? `Gold ${usd(pt.g)} · Platin ${usd(pt.p)}`
+                    : `Gold ${usd(pt.g)} · Silber ${usd(pt.s)}`;
                 }
               }
             }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min: 1925,
+              max: new Date().getFullYear() + 1,
+              grid: { color: '#f3f4f6' },
+              ticks: { color: '#6b7280', stepSize: 10, callback: v => Math.round(v) }
+            },
+            y: {
+              beginAtZero: opts.beginAtZero,
+              grid: {
+                color: ctx => opts.refs.reduce((c, [v, col]) => Math.abs(ctx.tick.value - v) < 1e-6 ? col : c, '#f3f4f6'),
+                lineWidth: ctx => opts.refs.some(([v]) => Math.abs(ctx.tick.value - v) < 1e-6) ? 2 : 1
+              },
+              ticks: { color: '#6b7280', stepSize: opts.step, callback: v => fmt(v, opts.step < 1 ? 1 : 0) }
+            }
           }
-        });
+        }
+      });
+    }
 
-        // Chart-Container Höhe setzen
-        document.querySelector('.chart-wrapper').style.height = '500px';
+    const gpChart = makeChart('gpChart', 'gp', '#1e40af', 'rgba(30, 64, 175, 0.08)', {
+      label: 'Gold/Platin',
+      beginAtZero: true,
+      step: 0.5,
+      refs: [[1, '#22c55e'], [2, '#ef4444']],
+      interpret: r => r < 0.95 ? ' (Platin teurer)' : r <= 1.05 ? ' (etwa gleich)' : r > 2 ? ' (Gold sehr dominant)' : ' (Gold teurer)'
+    });
 
+    const gsChart = makeChart('gsChart', 'gs', '#475569', 'rgba(71, 85, 105, 0.08)', {
+      label: 'Gold/Silber',
+      beginAtZero: true,
+      step: 20,
+      refs: [[40, '#22c55e'], [80, '#ef4444']],
+      interpret: r => r < 40 ? ' (Silber teuer)' : r > 80 ? ' (Silber günstig)' : ''
+    });
+
+    function showCurrent(g, s, p, source) {
+      document.getElementById('curGP').textContent = fmt(g / p, 2);
+      document.getElementById('curGS').textContent = fmt(g / s, 1);
+      document.getElementById('curGPsub').textContent = `Gold ${usd(g)} · Platin ${usd(p)}`;
+      document.getElementById('curGSsub').textContent = `Gold ${usd(g)} · Silber ${usd(s)}`;
+      document.getElementById('stand').textContent = source;
+    }
+
+    // Fallback: letzter Monatsschluss aus den eingebetteten Daten
+    const last = points[points.length - 1];
+    showCurrent(last.g, last.s, last.p, `Stand: Monatsschluss ${last.label} (Live-Kurse nicht erreichbar)`);
+
+    // Live-Spotpreise nachladen und als letzten Punkt anhängen
+    async function loadLive() {
+      const get = sym => fetch(`https://api.gold-api.com/price/${sym}`, { cache: 'no-store' })
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+      try {
+        const [au, ag, pt] = await Promise.all(['XAU', 'XAG', 'XPT'].map(get));
+        const g = au.price, s = ag.price, p = pt.price;
+        if (!(g > 0 && s > 0 && p > 0)) throw new Error('ungültige Daten');
+        const when = new Date(au.updatedAt || Date.now());
+        const x = when.getFullYear() + (when.getMonth() + when.getDate() / 31) / 12;
+        const livePt = { x, label: 'Live ' + when.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }), g, s, p };
+        gpChart.data.datasets[0].data.push({ x, y: g / p, pt: livePt });
+        gsChart.data.datasets[0].data.push({ x, y: g / s, pt: livePt });
+        gpChart.update(); gsChart.update();
+        showCurrent(g, s, p, `Live-Spotpreise · ${livePt.label.slice(5)}`);
       } catch (e) {
-        document.getElementById('loading').textContent = `Fehler: ${e.message || 'Keine Daten verfügbar.'}`;
-        console.error(e);
+        console.warn('Live-Kurse nicht geladen:', e);
       }
     }
+    loadLive();
 
     // PWA Setup
     let deferredPrompt;
@@ -306,23 +315,11 @@
     installBtn.addEventListener('click', async () => {
       if (deferredPrompt) {
         deferredPrompt.prompt();
-        const choiceResult = await deferredPrompt.userChoice;
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the A2HS prompt');
-        }
+        await deferredPrompt.userChoice;
         deferredPrompt = null;
         installBtn.style.display = 'none';
       }
     });
-
-    // Service Worker Registrierung (deaktiviert für sandboxed Umgebung)
-    // if ('serviceWorker' in navigator) {
-    //   navigator.serviceWorker.register('/sw.js')
-    //     .then(() => console.log('Service Worker registriert'))
-    //     .catch(err => console.log('SW nicht registriert:', err));
-    // }
-
-    fetchData();
   </script>
 </body>
 </html>
