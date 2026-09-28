@@ -1,6 +1,6 @@
 """Aktualisiert die Monatsdaten (MONTHLY) in index.html mit den Futures-Monatsschlusskursen.
 
-Quelle: Yahoo Finance via yfinance (GC=F Gold, SI=F Silber, PL=F Platin).
+Quelle: Yahoo Finance via yfinance (GC=F Gold, SI=F Silber, PL=F Platin, PA=F Palladium).
 Nur abgeschlossene Monate. Bestehende Werte bleiben erhalten, neue werden ergänzt
 bzw. überschrieben – ein Ausfall der Datenquelle kann also keine Historie löschen.
 """
@@ -15,8 +15,9 @@ import yfinance as yf
 
 MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli',
           'August', 'September', 'Oktober', 'November', 'Dezember']
-TICKER = {'g': 'GC=F', 's': 'SI=F', 'p': 'PL=F'}
-DIGITS = {'g': 2, 's': 3, 'p': 2}
+TICKER = {'g': 'GC=F', 's': 'SI=F', 'p': 'PL=F', 'd': 'PA=F'}
+DIGITS = {'g': 2, 's': 3, 'p': 2, 'd': 2}
+OPTIONAL = {'d'}  # Palladium darf in einzelnen Monaten fehlen (null)
 
 INDEX = pathlib.Path(__file__).resolve().parents[1] / 'index.html'
 html = INDEX.read_text(encoding='utf-8')
@@ -36,15 +37,15 @@ for key, ticker in TICKER.items():
     if isinstance(c, pd.DataFrame):
         c = c.iloc[:, 0]
     closes[key] = c
-new = pd.DataFrame(closes).dropna()
+new = pd.DataFrame(closes).dropna(subset=[k for k in TICKER if k not in OPTIONAL])
 new = new[new.index < pd.Timestamp(dt.date.today().replace(day=1))]  # nur abgeschlossene Monate
 if new.empty:
     sys.exit('Keine neuen Daten erhalten – index.html bleibt unverändert')
 
 for ts, r in new.iterrows():
     ym = ts.strftime('%Y-%m')
-    vals = [round(float(r[k]), DIGITS[k]) for k in ('g', 's', 'p')]
-    if min(vals) <= 0:
+    vals = [None if pd.isna(r[k]) else round(float(r[k]), DIGITS[k]) for k in TICKER]
+    if min(v for v in vals if v is not None) <= 0:
         sys.exit(f'Unplausible Werte für {ym}: {vals}')
     rows[ym] = [ym, *vals]
 
